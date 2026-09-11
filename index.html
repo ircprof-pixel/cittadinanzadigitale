@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="it" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cittadini Responsabili nella Rete - Piattaforma Interattiva</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        amberAccent: {
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        },
+                        warmBg: '#F8F6F0',
+                        cardBg: '#FFFFFF',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Embedded minimal CSS for strictly constrained Chart containers and custom UI elements -->
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 380px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .badge-glow {
+            box-shadow: 0 0 12px rgba(13, 148, 136, 0.35);
+        }
+    </style>
+</head>
+<!--
+Chosen Palette: Warm Neutral Harmony (Warm Off-White #F8F6F0 background, Deep Slate text, Slate/Teal #0d9488 main branding, Warm Terracotta/Amber #d97706 highlights, White card containers).
+-->
+<!--
+Application Structure Plan:
+1. Header & Dynamic Navigation: Easy tabs switching between Day 1 Escape Room, Curriculum Arc, Fact-Checking Lab, Digital Manifesto, Grade 2 Memory Archive, and DEE Evaluation Matrix.
+2. Section 1: "Operazione Re-Connect" Escape Room Simulator:
+   - Live interactive escape game for Day 1 with 3 sequential Tappe without revealing correct options visually.
+   - Includes Tappa 1 (Bene Comune enigma), Tappa 2 (Balanced 3 Original vs 3 Fotocopia selection), and Tappa 3 (L'equazione della Responsabilità).
+   - Dynamic system lock/unlock status banner.
+3. Section 2: Curriculum Roadmap & DEE Spiral:
+   - Interactive breakdown of Lessons 1, 2, and 3 based on the Didattica Ermeneutica Esistenziale spiral.
+   - Interactive case study viewer for Lesson 1 (Cases A, B, C) and the Chain of Responsibility.
+4. Section 3: Fact-Checking Lab ("Il Cacciatore di Notizie"):
+   - Interactive tool allowing students/teachers to evaluate fake posts and WhatsApp messages using the 5 key criteria (CHI, QUANDO, PROVE, CONFRONTO, PERCHÉ).
+   - Real-time credibility score meter and decision simulator.
+5. Section 4: Manifesto del Cittadino Digitale & Commitment Checklist:
+   - The 5 core commitments with interactive checkboxes, progress calculation, and printable certificate generator.
+6. Section 5: Archivio Classe 2ª (San Francesco, Costituzione, Lorenzetti, Carlo Acutis):
+   - Memory hub reconnecting past learning concepts to the digital citizenship realm.
+7. Section 6: Docente & Valutazione DEE:
+   - Interactive radar chart comparing student competence levels.
+   - Automated feedback sentence generator for teachers.
+Why this structure: It engages students actively without giving away the answers upfront, encouraging critical thinking during the Day 1 Escape Room and subsequent modules.
+-->
+<!--
+Visualization & Content Choices:
+1. Escape Room Interactive Terminal -> Inform/Engage -> Custom JS step-by-step unlocked state -> Immediate visual response -> Vanilla JS DOM.
+2. Chain of Responsibility Flow -> Process Flowchart -> Custom styled Tailwind HTML cards with arrow connectors -> High readability -> Tailwind CSS grid.
+3. Fact-Checker Credibility Gauge -> Interactive Analysis -> Dynamic progress bar & decision badge -> Visual clarity -> Vanilla JS logic.
+4. DEE Radar Chart -> Competence Evaluation -> Chart.js Radar Canvas -> Responsive and updatable -> Chart.js library (No SVG).
+5. 5-Point Fact-Checking Criteria Breakdown -> Bar Chart -> Chart.js Bar Canvas -> Clear comparative metric -> Chart.js library (No SVG).
+CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. All visual elements rely on standard HTML, CSS Tailwind, Canvas, and Unicode symbols.
+-->
+<body class="bg-warmBg text-slate-800 font-sans leading-relaxed min-h-screen flex flex-col">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                        🌐
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg text-slate-900 block leading-tight">Cittadini Responsabili nella Rete</span>
+                        <span class="text-xs text-brand-700 font-medium">Educazione Civica & DEE | Classe Terza</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1 lg:space-x-2 text-sm font-medium">
+                    <button onclick="switchTab('escape-room')" id="nav-escape-room" class="tab-btn px-3 py-2 rounded-lg text-brand-700 bg-brand-50 border border-brand-200 transition">
+                        🔓 Escape Room (Giorno 1)
+                    </button>
+                    <button onclick="switchTab('curriculum')" id="nav-curriculum" class="tab-btn px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition">
+                        🗺️ Percorso 3 Lezioni
+                    </button>
+                    <button onclick="switchTab('fact-checker')" id="nav-fact-checker" class="tab-btn px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition">
+                        🕵️ Lab Cacciatore Notizie
+                    </button>
+                    <button onclick="switchTab('manifesto')" id="nav-manifesto" class="tab-btn px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition">
+                        📜 Il Manifesto
+                    </button>
+                    <button onclick="switchTab('archivio')" id="nav-archivio" class="tab-btn px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition">
+                        📚 Archivio 2ª
+                    </button>
+                    <button onclick="switchTab('docente')" id="nav-docente" class="tab-btn px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition">
+                        📊 Valutazione DEE
+                    </button>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <select onchange="switchTab(this.value)" class="bg-slate-100 text-slate-800 text-sm rounded-lg p-2 border border-slate-300">
+                        <option value="escape-room">🔓 Escape Room (Giorno 1)</option>
+                        <option value="curriculum">🗺️ Percorso 3 Lezioni</option>
+                        <option value="fact-checker">🕵️ Lab Cacciatore Notizie</option>
+                        <option value="manifesto">📜 Il Manifesto</option>
+                        <option value="archivio">📚 Archivio 2ª</option>
+                        <option value="docente">📊 Valutazione DEE</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: ESCAPE ROOM SIMULATOR (DAY 1) -->
+        <!-- ========================================== -->
+        <section id="tab-escape-room" class="tab-content block space-y-8">
+            
+            <!-- Intro Paragraph Context -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-start space-x-4">
+                    <div class="text-3xl p-3 bg-amber-100 text-amber-800 rounded-xl">🔒</div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900">Attività del Primo Giorno: Operazione Re-Connect</h1>
+                        <p class="text-slate-600 text-sm mt-1">
+                            Benvenuti al nuovo anno scolastico! Questa attività introduttiva utilizza la metodologia dell'<strong>Escape Room Narrativa</strong> e della <strong>Didattica Ermeneutica Esistenziale (DEE)</strong>. 
+                            I ragazzi lavorano in piccoli gruppi per riannodare i fili con le grandi tematiche affrontate in 2ª (San Francesco, Costituzione, Lorenzetti, Carlo Acutis) e sbloccare l'accesso al nuovo percorso sulla Cittadinanza Digitale.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lock Status Banner -->
+            <div id="system-status-banner" class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg border-2 border-amber-500 transition-all duration-500">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div id="status-icon" class="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center font-mono font-bold text-xl animate-pulse">
+                            ⚠️
+                        </div>
+                        <div>
+                            <span class="text-xs uppercase tracking-widest text-amber-400 font-mono">STATO SISTEMA ARCHIVIO</span>
+                            <h2 id="status-title" class="text-xl font-mono font-bold text-red-400">SYSTEM LOCKED - ARCHIVIO CLASSE 2ª CRITTOGRAFATO</h2>
+                            <p id="status-desc" class="text-sm text-slate-300">L'entità PHANTOM-NET ha cifrato i file. Risolvete le 3 tappe per ricostruire il codice etico di sicurezza!</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800 px-4 py-3 rounded-xl border border-slate-700 font-mono text-center">
+                        <span class="text-xs text-slate-400 block">PROGRESSO SBLOCCO</span>
+                        <span id="unlock-progress-text" class="text-lg font-bold text-amber-400">0 / 3 TAPPE</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Board Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- TAPPA 1 CARD -->
+                <div id="card-tappa-1" class="bg-white p-6 rounded-2xl shadow-sm border-2 border-brand-500 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="px-3 py-1 bg-brand-100 text-brand-800 text-xs font-bold rounded-full">TAPPA 1 di 3</span>
+                            <span id="badge-tappa-1" class="text-xs font-mono font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded">In Corso</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">📜 I Fili della Custodia e della Dignità</h3>
+                        <p class="text-xs text-slate-500 mb-4">Ripasso: San Francesco (Cantico) e Art. 3 e 4 Costituzione</p>
+                        
+                        <div class="bg-slate-50 p-3 rounded-lg text-xs text-slate-700 space-y-2 border border-slate-200 mb-4 font-mono">
+                            <p>1. Art. 3 Costituzione: Pari ... [D___]</p>
+                            <p>2. Cantico delle Creature: Sora nostra madre ... [T___]</p>
+                            <p>3. Art. 4 Costituzione: Lavoro e ... [R___]</p>
+                        </div>
+
+                        <p class="text-sm font-semibold text-slate-800 mb-2">Domanda di Sblocco Tappa 1:</p>
+                        <p class="text-xs text-slate-600 mb-3">Qual è l'obiettivo finale a cui tendono sia il Cantico di San Francesco che i Principi Fondamentali della Costituzione?</p>
+                        
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2 text-xs p-2 rounded hover:bg-slate-50 cursor-pointer border border-slate-200">
+                                <input type="radio" name="tappa1" value="A" class="text-brand-600">
+                                <span>A) L'interesse individuale egoistico</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs p-2 rounded hover:bg-slate-50 cursor-pointer border border-slate-200">
+                                <input type="radio" name="tappa1" value="B" class="text-brand-600">
+                                <span>B) Il Bene Comune</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs p-2 rounded hover:bg-slate-50 cursor-pointer border border-slate-200">
+                                <input type="radio" name="tappa1" value="C" class="text-brand-600">
+                                <span>C) Il successo personale a tutti i costi</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <button onclick="verifyTappa1()" id="btn-tappa-1" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-xl transition shadow">
+                            Verifica Risposta Tappa 1
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAPPA 2 CARD -->
+                <div id="card-tappa-2" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 opacity-60 pointer-events-none flex flex-col justify-between transition-all">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">TAPPA 2 di 3</span>
+                            <span id="badge-tappa-2" class="text-xs font-mono font-semibold text-slate-400">Bloccata</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">🎨 L'Affresco delle Virtù e la Ricerca dell'Autenticità</h3>
+                        <p class="text-xs text-slate-500 mb-3">Ripasso: Lorenzetti, Gesù nelle Parabole e Carlo Acutis</p>
+                        
+                        <p class="text-xs text-slate-600 mb-2"><strong>Azione:</strong> Individua e spunta esattamente le 3 <strong>"Fotocopie"</strong> (comportamenti errati/trappole) da scartare per salvare gli atteggiamenti <strong>"Originali"</strong>:</p>
+                        
+                        <div class="space-y-1.5 text-xs max-h-52 overflow-y-auto p-2 bg-slate-50 rounded-lg border border-slate-200">
+                            <label class="flex items-start space-x-2 p-1 rounded hover:bg-white cursor-pointer">
+                                <input type="checkbox" value="foto1" class="fotocopia-check mt-0.5">
+                                <span>1. Giudicare gli altri basandosi unicamente sulle apparenze e sui pregiudizi.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-1 rounded hover:bg-white cursor-pointer">
+                                <input type="checkbox" value="foto2" class="fotocopia-check mt-0.5">
+                                <span>2. Rispettare l'unicità di ciascuno ed esprimere le proprie idee con gentilezza.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-1 rounded hover:bg-white cursor-pointer">
+                                <input type="checkbox" value="foto3" class="fotocopia-check mt-0.5">
+                                <span>3. Restare indifferenti e in silenzio quando un compagno subisce un'ingiustizia.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-1 rounded hover:bg-white cursor-pointer">
+                                <input type="checkbox" value="foto4" class="fotocopia-check mt-0.5">
+                                <span>4. Custodire e rispettare i beni e gli spazi comuni con senso di responsabilità.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-1 rounded hover:bg-white cursor-pointer">
+                                <input type="checkbox" value="foto5" class="fotocopia-check mt-0.5">
+                                <span>5. Omologarsi al gruppo e rinunciare ai propri valori pur di sentirsi accettati.</span>
+                            </label>
+                            <label class="flex items-start space-x-2 p-1 rounded hover:bg-white cursor-pointer">
+                                <input type="checkbox" value="foto6" class="fotocopia-check mt-0.5">
+                                <span>6. Ascoltare con empatia e verificare la verità delle informazioni prima di condividerle.</span>
+                            </label>
+                        </div>
+
+                        <div class="mt-3 space-y-2">
+                            <p class="text-xs font-semibold text-slate-700">Completa la citazione di Carlo Acutis:</p>
+                            <p class="text-xs italic text-slate-600">"Tutti nascono come Originali, ma molti muoiono come..."</p>
+                            <input type="text" id="input-acutis" placeholder="Inserisci la parola mancante" class="w-full text-xs p-2 border border-slate-300 rounded-lg">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <button onclick="verifyTappa2()" id="btn-tappa-2" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-xl transition shadow">
+                            Verifica Risposta Tappa 2
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAPPA 3 CARD -->
+                <div id="card-tappa-3" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 opacity-60 pointer-events-none flex flex-col justify-between transition-all">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">TAPPA 3 di 3</span>
+                            <span id="badge-tappa-3" class="text-xs font-mono font-semibold text-slate-400">Bloccata</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">🌐 Il Portale di Terza: La Sfida Digitale</h3>
+                        <p class="text-xs text-slate-500 mb-3">Lancio del nuovo percorso: Libertà e Vita Virtuale</p>
+                        
+                        <div class="bg-amber-50 p-3 rounded-lg border border-amber-200 text-xs text-amber-900 mb-3">
+                            <p class="font-bold">Provocazione di PHANTOM-NET:</p>
+                            <p class="italic mt-1">"Avete uno smartphone in mano e abitate il mondo virtuale. Lì dove nessuno vi vede e siete protetti dallo schermo... valgono ancora le stesse regole?"</p>
+                        </div>
+
+                        <p class="text-xs font-bold text-slate-800 mb-2">Risolvi l'Equazione Concettuale della Rete:</p>
+                        <div class="p-3 bg-slate-900 text-amber-400 font-mono text-center text-xs rounded-lg mb-3">
+                            [LIBERTÀ INDIVIDUALE] + [ ? ] = [CITTADINANZA RESPONSABILE]
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2 text-xs p-2 rounded hover:bg-slate-50 cursor-pointer border border-slate-200">
+                                <input type="radio" name="tappa3" value="A" class="text-brand-600">
+                                <span>A) Divertimento e Spontaneità</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs p-2 rounded hover:bg-slate-50 cursor-pointer border border-slate-200">
+                                <input type="radio" name="tappa3" value="B" class="text-brand-600">
+                                <span>B) Responsabilità personale e rispetto</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs p-2 rounded hover:bg-slate-50 cursor-pointer border border-slate-200">
+                                <input type="radio" name="tappa3" value="C" class="text-brand-600">
+                                <span>C) Anonimato e Assenza di Regole</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <button onclick="verifyTappa3()" id="btn-tappa-3" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-xl transition shadow">
+                            Sblocca Archivio Definitivo
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- UNLOCKED MISSION BANNER (Hidden initially) -->
+            <div id="unlocked-mission-card" class="hidden bg-emerald-900 text-white p-8 rounded-2xl shadow-xl border-2 border-emerald-400 transition-all">
+                <div class="text-center max-w-3xl mx-auto space-y-4">
+                    <span class="inline-block p-3 bg-emerald-800 text-emerald-300 rounded-full text-3xl mb-2">🎉 SYSTEM UNLOCKED 🎉</span>
+                    <h2 class="text-2xl font-bold font-mono text-emerald-300">BENVENUTI NEL PERCORSO DI TERZA MEDIA!</h2>
+                    <p class="text-slate-200 text-sm leading-relaxed">
+                        Complimenti! Avete dimostrato che i fili della memoria, della cura e della dignità non si sono spezzati durante l'estate. 
+                        Siete pronti per iniziare la <strong>Missione n. 1: "Cittadini Responsabili nella Rete — Tra Libertà, Verità e Rispetto"</strong>.
+                    </p>
+                    <div class="p-4 bg-emerald-950/60 rounded-xl border border-emerald-700/50 text-left text-xs space-y-2">
+                        <p class="font-bold text-amber-300 text-sm">❓ Domanda Guida del Nuovo Anno:</p>
+                        <p class="italic text-slate-200 text-sm">«Se online sono libero di dire, pubblicare e condividere ciò che voglio... significa che posso davvero fare tutto? Come posso distinguere la verità dalla manipolazione?»</p>
+                    </div>
+                    <div class="pt-4 flex justify-center gap-4">
+                        <button onclick="switchTab('curriculum')" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl transition shadow-lg text-sm">
+                            Esplora la Mappa del Percorso →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: CURRICULUM ROADMAP & DEE SPIRAL -->
+        <!-- ========================================== -->
+        <section id="tab-curriculum" class="tab-content hidden space-y-8">
+            
+            <!-- Intro Paragraph Context -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-900">Mappa Curricolare Integrata (3 Lezioni)</h2>
+                <p class="text-slate-600 text-sm mt-1">
+                    Il percorso sviluppa il nucleo tematico di Educazione Civica e Cittadinanza Digitale secondo la metodologia della 
+                    <strong>Didattica Ermeneutica Esistenziale (DEE)</strong>. L'apprendimento non muove da norme astratte, ma dalle situazioni reali della vita dei ragazzi per poi risalire alle fonti storiche e costituzionali.
+                </p>
+            </div>
+
+            <!-- 3 Lessons Tabs Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- LEZIONE 1 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 text-brand-600 font-bold text-xs uppercase tracking-wider mb-2">
+                            <span>Lezione 1 (60 min)</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Essere Cittadini: Libertà e Responsabilità</h3>
+                        <p class="text-xs text-slate-600 mb-4">
+                            Dalle reazioni d'impulso nelle chat e sui social alla scoperta dei limiti etici e costituzionali (Art. 2 e 3 Costituzione).
+                        </p>
+                        <ul class="text-xs text-slate-700 space-y-2 border-t border-slate-100 pt-3">
+                            <li class="flex items-center space-x-2">
+                                <span class="text-brand-500">📌</span>
+                                <span>3 Casi-Problema reali (Chat, Social, Regole)</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <span class="text-brand-500">📌</span>
+                                <span>La Catena della Responsabilità</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <span class="text-brand-500">📌</span>
+                                <span>Articoli 2 e 3 della Costituzione</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <button onclick="openLessonModal(1)" class="w-full py-2 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 text-xs font-bold rounded-lg transition">
+                            Vedi Dettaglio Lezione 1
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LEZIONE 2 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 text-amber-600 font-bold text-xs uppercase tracking-wider mb-2">
+                            <span>Lezione 2 (60 min)</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Informazioni: Posso Fidarmi?</h3>
+                        <p class="text-xs text-slate-600 mb-4">
+                            Decodifica critica delle fonti digitali: distinguere fatti oggettivi, opinioni, pubblicità e notizie ingannevoli.
+                        </p>
+                        <ul class="text-xs text-slate-700 space-y-2 border-t border-slate-100 pt-3">
+                            <li class="flex items-center space-x-2">
+                                <span class="text-amber-500">📌</span>
+                                <span>Analisi di 4 tipologie di testo</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <span class="text-amber-500">📌</span>
+                                <span>La Cassetta degli Attrezzi del Fact-Checker</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <span class="text-amber-500">📌</span>
+                                <span>I 5 Capisaldi della Verifica delle Fonti</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <button onclick="openLessonModal(2)" class="w-full py-2 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 text-xs font-bold rounded-lg transition">
+                            Vedi Dettaglio Lezione 2
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LEZIONE 3 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 text-emerald-600 font-bold text-xs uppercase tracking-wider mb-2">
+                            <span>Lezione 3 (60 min)</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Il Cittadino Digitale Responsabile</h3>
+                        <p class="text-xs text-slate-600 mb-4">
+                            Interiorizzazione ed esercizio pratico: stesura del Manifesto comune e prova individuale del "Cacciatore di Notizie".
+                        </p>
+                        <ul class="text-xs text-slate-700 space-y-2 border-t border-slate-100 pt-3">
+                            <li class="flex items-center space-x-2">
+                                <span class="text-emerald-500">📌</span>
+                                <span>La Sequenza Aurea del Comportamento</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <span class="text-emerald-500">📌</span>
+                                <span>Il Manifesto del Cittadino Digitale</span>
+                            </li>
+                            <li class="flex items-center space-x-2">
+                                <span class="text-emerald-500">📌</span>
+                                <span>Compito di Realtà & Autovalutazione</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <button onclick="openLessonModal(3)" class="w-full py-2 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 text-xs font-bold rounded-lg transition">
+                            Vedi Dettaglio Lezione 3
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- INTERACTIVE CASE STUDY EXPLORER (Lesson 1 Focus) -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold text-slate-900 mb-2">💡 Esplora i 3 Casi-Studio della Lezione 1</h3>
+                <p class="text-xs text-slate-600 mb-4">Seleziona una situazione-problema reale per scoprire la catena della responsabilità ed i quesiti etici:</p>
+
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="showCase(1)" id="btn-case-1" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white transition">Caso A: Offese in Chat</button>
+                    <button onclick="showCase(2)" id="btn-case-2" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Caso B: Video sui Social</button>
+                    <button onclick="showCase(3)" id="btn-case-3" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">Caso C: Regole a Scuola</button>
+                </div>
+
+                <div id="case-display" class="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-4">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- LA CATENA DELLA RESPONSABILITÀ INTERATTIVA -->
+            <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-md space-y-4">
+                <h3 class="text-lg font-bold text-amber-400">🔗 La Catena della Responsabilità (Dal Vissuto al Bene Comune)</h3>
+                <p class="text-xs text-slate-300">Ogni nostra azione o omissione nello spazio digitale innesca una reazione a catena:</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-center pt-2">
+                    <div class="p-3 bg-slate-800 rounded-xl border border-slate-700">
+                        <span class="text-xs font-bold text-amber-400 block mb-1">1. LIBERTÀ</span>
+                        <span class="text-[11px] text-slate-300 block">Diritto di esprimersi e scegliere</span>
+                    </div>
+                    <div class="p-3 bg-slate-800 rounded-xl border border-slate-700">
+                        <span class="text-xs font-bold text-amber-400 block mb-1">2. SCELTA</span>
+                        <span class="text-[11px] text-slate-300 block">Pubblicare, leggere, isolare, segnalare</span>
+                    </div>
+                    <div class="p-3 bg-slate-800 rounded-xl border border-slate-700">
+                        <span class="text-xs font-bold text-amber-400 block mb-1">3. RESPONSABILITÀ</span>
+                        <span class="text-[11px] text-slate-300 block">Consapevolezza dei propri doveri</span>
+                    </div>
+                    <div class="p-3 bg-slate-800 rounded-xl border border-slate-700">
+                        <span class="text-xs font-bold text-amber-400 block mb-1">4. CONSEGUENZE</span>
+                        <span class="text-[11px] text-slate-300 block">Impatto sulle persone coinvolte</span>
+                    </div>
+                    <div class="p-3 bg-brand-700 rounded-xl border border-brand-500 font-bold">
+                        <span class="text-xs text-white block mb-1">5. BENE COMUNE</span>
+                        <span class="text-[11px] text-brand-100 block">Ambiente digitale sicuro per tutti</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: FACT-CHECKER LAB ("IL CACCIATORE DI NOTIZIE") -->
+        <!-- ========================================== -->
+        <section id="tab-fact-checker" class="tab-content hidden space-y-8">
+            
+            <!-- Intro Paragraph Context -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-900">🕵️ Laboratorio: Il Cacciatore di Notizie</h2>
+                <p class="text-slate-600 text-sm mt-1">
+                    In questo laboratorio interattivo puoi vestire i panni di un <strong>Fact-Checker professionale</strong>. 
+                    Analizza i post ed i messaggi circolanti tra gli studenti applicando la <strong>Cassetta degli Attrezzi (CHI, QUANDO, PROVE, CONFRONTO, PERCHÉ)</strong> per valutare l'attendibilità delle informazioni prima di condividerle.
+                </p>
+            </div>
+
+            <!-- Lab Main Interactive Interface -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Left Column: Case Selector & Message Preview (5 cols) -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <label class="text-xs font-bold text-slate-700 block mb-2">SELEZIONA IL CASO DA ANALIZZARE:</label>
+                        <select onchange="loadFactCheckCase(this.value)" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-800">
+                            <option value="insta">Post Instagram: "Cambio Orario Scolastico"</option>
+                            <option value="matteo">Messaggio WhatsApp: "Chiusura per Disinfestazione"</option>
+                            <option value="biblio">Comunicato: "Chiusura Biblioteca Comunale"</option>
+                        </select>
+                    </div>
+
+                    <!-- Simulated Phone / Social Card -->
+                    <div id="simulated-post-container" class="bg-white p-5 rounded-2xl border-2 border-slate-300 shadow-md">
+                        <!-- Loaded dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive Checklist & Verdict Gauge (7 cols) -->
+                <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1">🧰 La Cassetta degli Attrezzi della Verifica</h3>
+                        <p class="text-xs text-slate-500 mb-4">Spunta le domande a cui riesci a dare una risposta positiva e verificata:</p>
+
+                        <div class="space-y-3">
+                            <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-start space-x-3">
+                                <input type="checkbox" id="chk-chi" onchange="updateFactCheckScore()" class="mt-1 h-4 w-4 text-brand-600 rounded">
+                                <div>
+                                    <label for="chk-chi" class="text-xs font-bold text-slate-800 block cursor-pointer">1. CHI lo dice? (Autore / Fonte)</label>
+                                    <span class="text-[11px] text-slate-500">L'autore è identificabile, ufficiale o esperto riconosciuto?</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-start space-x-3">
+                                <input type="checkbox" id="chk-quando" onchange="updateFactCheckScore()" class="mt-1 h-4 w-4 text-brand-600 rounded">
+                                <div>
+                                    <label for="chk-quando" class="text-xs font-bold text-slate-800 block cursor-pointer">2. QUANDO lo dice? (Datazione)</label>
+                                    <span class="text-[11px] text-slate-500">È presente una data precisa e recente, o è decontestualizzato?</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-start space-x-3">
+                                <input type="checkbox" id="chk-prove" onchange="updateFactCheckScore()" class="mt-1 h-4 w-4 text-brand-600 rounded">
+                                <div>
+                                    <label for="chk-prove" class="text-xs font-bold text-slate-800 block cursor-pointer">3. Ci sono PROVE? (Verificabilità)</label>
+                                    <span class="text-[11px] text-slate-500">Ci sono documenti ufficiali, dati o link a fonti primarie?</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-start space-x-3">
+                                <input type="checkbox" id="chk-confronto" onchange="updateFactCheckScore()" class="mt-1 h-4 w-4 text-brand-600 rounded">
+                                <div>
+                                    <label for="chk-confronto" class="text-xs font-bold text-slate-800 block cursor-pointer">4. C'è CONFRONTO? (Fonti incrociate)</label>
+                                    <span class="text-[11px] text-slate-500">La notizia è confermata dal sito della scuola o dai media ufficiali?</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-start space-x-3">
+                                <input type="checkbox" id="chk-perche" onchange="updateFactCheckScore()" class="mt-1 h-4 w-4 text-brand-600 rounded">
+                                <div>
+                                    <label for="chk-perche" class="text-xs font-bold text-slate-800 block cursor-pointer">5. PERCHÉ lo dice? (Scopo e Toni)</label>
+                                    <span class="text-[11px] text-slate-500">Lo scopo è informare con equilibrio o creare allarme/clickbait?</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Credibility & Action Decision Output -->
+                    <div class="mt-6 pt-4 border-t border-slate-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-slate-700">INDICE DI AFFIDABILITÀ NOTIZIA:</span>
+                            <span id="factcheck-percent" class="text-sm font-bold font-mono text-red-600">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-3 mb-4 overflow-hidden">
+                            <div id="factcheck-bar" class="bg-red-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+
+                        <div id="factcheck-verdict-box" class="p-3 bg-red-50 text-red-900 border border-red-200 rounded-xl text-xs flex justify-between items-center">
+                            <div>
+                                <strong>VERDETTO:</strong> <span id="factcheck-verdict-text">NOTIZIA NON VERIFICATA / SOSPETTA FAKE NEWS</span>
+                            </div>
+                            <span id="factcheck-action-badge" class="px-2.5 py-1 bg-red-600 text-white font-bold text-[10px] rounded-full uppercase">🚫 NON CONDIVIDERE</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Visual Chart Container: Fact Checking Criteria Weights -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-bold text-slate-900 mb-1">📊 Importanza dei 5 Criteri di Fact-Checking secondo gli Studenti</h3>
+                <p class="text-xs text-slate-500 mb-4">Punteggio di rilevanza attribuito nelle lezioni per smascherare l'inganno virtuale:</p>
+                <div class="chart-container">
+                    <canvas id="factCheckingChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: IL MANIFESTO DEL CITTADINO DIGITALE -->
+        <!-- ========================================== -->
+        <section id="tab-manifesto" class="tab-content hidden space-y-8">
+            
+            <!-- Intro Paragraph Context -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-900">📜 Il Manifesto del Cittadino Digitale</h2>
+                <p class="text-slate-600 text-sm mt-1">
+                    Il Manifesto rappresenta il <strong>patto di convivenza civile e relazionale</strong> co-progettato dalla classe. 
+                    Puoi sottoscrivere personalmente i 5 impegni concreti per assumere una responsabilità proattiva nella tua vita digitale quotidiana.
+                </p>
+            </div>
+
+            <!-- Golden Rule Sequence Header -->
+            <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-md">
+                <h3 class="text-center font-bold text-amber-400 text-sm uppercase tracking-wider mb-4">LA SEQUENZA AUREA DEL CITTADINO DIGITALE RESPONSABILE</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+                    <div class="p-2.5 bg-slate-800 rounded-xl border border-slate-700">
+                        <span class="text-lg block">🛑</span>
+                        <span class="text-xs font-bold text-amber-300 block">1. FERMATI</span>
+                        <span class="text-[10px] text-slate-300">Pausa d'impulso</span>
+                    </div>
+                    <div class="p-2.5 bg-slate-800 rounded-xl border border-slate-700">
+                        <span class="text-lg block">🔍</span>
+                        <span class="text-xs font-bold text-amber-300 block">2. CONTROLLA</span>
+                        <span class="text-[10px] text-slate-300">Verifica la fonte</span>
+                    </div>
+                    <div class="p-2.5 bg-slate-800 rounded-xl border border-slate-700">
+                        <span class="text-lg block">💬</span>
+                        <span class="text-xs font-bold text-amber-300 block">3. CONFRONTA</span>
+                        <span class="text-[10px] text-slate-300">Fonti incrociate</span>
+                    </div>
+                    <div class="p-2.5 bg-slate-800 rounded-xl border border-slate-700">
+                        <span class="text-lg block">💡</span>
+                        <span class="text-xs font-bold text-amber-300 block">4. PENSA</span>
+                        <span class="text-[10px] text-slate-300">Analisi critica</span>
+                    </div>
+                    <div class="p-2.5 bg-brand-700 rounded-xl border border-brand-500 font-bold">
+                        <span class="text-lg block">📲</span>
+                        <span class="text-xs text-white block">5. CONDIVIDI</span>
+                        <span class="text-[10px] text-brand-100">Solo se sicuro</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive 5 Commitments Checklist -->
+            <div class="space-y-4">
+
+                <!-- Rule 1 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-start space-x-4">
+                    <input type="checkbox" onchange="updateManifestoProgress()" class="manifesto-chk mt-1.5 h-5 w-5 text-brand-600 rounded">
+                    <div class="flex-grow">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-md">REGOLA 1</span>
+                            <h4 class="text-base font-bold text-slate-900">Ci fermiamo e riflettiamo 🛑</h4>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Prima di condividere, commentare o inoltrare un messaggio su WhatsApp o sui social, verifichiamo la fonte ed evitiamo reazioni d'impulso basate sulle emozioni del momento.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rule 2 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-start space-x-4">
+                    <input type="checkbox" onchange="updateManifestoProgress()" class="manifesto-chk mt-1.5 h-5 w-5 text-brand-600 rounded">
+                    <div class="flex-grow">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-md">REGOLA 2</span>
+                            <h4 class="text-base font-bold text-slate-900">Rispettiamo la dignità altrui 👤</h4>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Non pubblichiamo o diffondiamo foto, video o informazioni compromettenti dei compagni, riconoscendo che la libertà individuale trova il suo limite etico nel rispetto dell'altro.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rule 3 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-start space-x-4">
+                    <input type="checkbox" onchange="updateManifestoProgress()" class="manifesto-chk mt-1.5 h-5 w-5 text-brand-600 rounded">
+                    <div class="flex-grow">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-md">REGOLA 3</span>
+                            <h4 class="text-base font-bold text-slate-900">Applichiamo la verifica critica 🔍</h4>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Usiamo la Cassetta degli Attrezzi (Chi? Quando? Prove? Confronto? Perché?) per riconoscere ed etichettare notizie, opinioni, pubblicità e fake news.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rule 4 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-start space-x-4">
+                    <input type="checkbox" onchange="updateManifestoProgress()" class="manifesto-chk mt-1.5 h-5 w-5 text-brand-600 rounded">
+                    <div class="flex-grow">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-md">REGOLA 4</span>
+                            <h4 class="text-base font-bold text-slate-900">Contrastiamo l'esclusione 🤝</h4>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Nelle chat di classe e nei gruppi virtuali cerchiamo di includere tutti. Non partecipiamo all'offesa o all'isolamento di un compagno, superando la passività degli spettatori.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rule 5 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-start space-x-4">
+                    <input type="checkbox" onchange="updateManifestoProgress()" class="manifesto-chk mt-1.5 h-5 w-5 text-brand-600 rounded">
+                    <div class="flex-grow">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-md">REGOLA 5</span>
+                            <h4 class="text-base font-bold text-slate-900">Custodiamo il bene comune 🌐</h4>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Usiamo un linguaggio rispettoso, equilibrato e costruttivo in rete. Comprendiamo che ogni nostra azione lascia un'impronta digitale permanente nella comunità.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Manifesto Signing Card -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center space-y-4">
+                <h3 class="text-lg font-bold text-slate-900">Sottoscrivi il tuo Impegno Digitale</h3>
+                <p class="text-xs text-slate-600 max-w-md mx-auto">
+                    Inserisci il tuo nome e classe per sottoscrivere ufficialmente il Manifesto del Cittadino Digitale della Terza Media:
+                </p>
+                
+                <div class="flex flex-col sm:flex-row justify-center items-center gap-3 max-w-md mx-auto">
+                    <input type="text" id="student-name" placeholder="Il tuo Nome e Cognome" class="w-full p-2.5 border border-slate-300 rounded-xl text-xs">
+                    <button onclick="signManifesto()" class="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl transition shadow">
+                        Firma il Manifesto
+                    </button>
+                </div>
+
+                <div id="signature-output" class="hidden p-4 bg-brand-50 border border-brand-200 rounded-xl text-brand-900 text-xs font-mono">
+                    <!-- Dynamic signature confirmation -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: ARCHIVIO CLASSE 2ª (RE-CONNECT) -->
+        <!-- ========================================== -->
+        <section id="tab-archivio" class="tab-content hidden space-y-8">
+            
+            <!-- Intro Paragraph Context -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-900">📚 Archivio della Memoria (Classe Seconda)</h2>
+                <p class="text-slate-600 text-sm mt-1">
+                    Nessun futuro si costruisce se si spezzano i fili del passato. Questa sezione racchiude i pilastri etici e storici costruiti durante il secondo anno di corso, riallacciati durante l'Escape Room del primo giorno.
+                </p>
+            </div>
+
+            <!-- 4 Pillar Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Pillar 1 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 bg-amber-100 text-amber-800 rounded-xl text-xl">🕊️</span>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">San Francesco & Il Cantico delle Creature</h3>
+                            <span class="text-xs text-amber-700 font-medium">La Cura del Creato e della Fratellanza</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Dalla conversione francescana alla scrittura del Cantico 2.0. Riconoscere che la vera libertà non è isolamento egoistico, ma relazione, custodia della "Madre Terra" e rispetto profondo per ogni persona umana.
+                    </p>
+                </div>
+
+                <!-- Pillar 2 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 bg-blue-100 text-blue-800 rounded-xl text-xl">⚖️</span>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">La Costituzione Italiana (Art. 3 e 4)</h3>
+                            <span class="text-xs text-blue-700 font-medium">Pari Dignità e Responsabilità Civile</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        L'Articolo 3 garantisce la pari dignità sociale senza discriminazioni. L'Articolo 4 promuove il dovere di ciascuno di contribuire al progresso morale e materiale della società per la costruzione del Bene Comune.
+                    </p>
+                </div>
+
+                <!-- Pillar 3 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 bg-emerald-100 text-emerald-800 rounded-xl text-xl">🎨</span>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Ambrogio Lorenzetti & Il Buon Governo</h3>
+                            <span class="text-xs text-emerald-700 font-medium">Le Virtù Cardinali nella Comunità</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        L'analisi dell'affresco trecentesco a Siena: la Giustizia e la Prudenza coordinano l'agire dei cittadini. Una comunità prospera solo se rifiuta l'egoismo individuale a favore della concordia sociale.
+                    </p>
+                </div>
+
+                <!-- Pillar 4 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 bg-purple-100 text-purple-800 rounded-xl text-xl">📲</span>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Carlo Acutis & Gesù Nelle Parabole</h3>
+                            <span class="text-xs text-purple-700 font-medium">L'Autenticità contro l'Omologazione</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Gesù comunica la verità superando i pregiudizi del tempo. Carlo Acutis usa la rete con creatività e fede, lasciandoci il celebre monito: <em>"Tutti nascono come originali, ma molti muoiono come fotocopie"</em>.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 6: DOCENTE & VALUTAZIONE DEE -->
+        <!-- ========================================== -->
+        <section id="tab-docente" class="tab-content hidden space-y-8">
+            
+            <!-- Intro Paragraph Context -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-900">📊 Sezione Docente & Valutazione Formativa DEE</h2>
+                <p class="text-slate-600 text-sm mt-1">
+                    La Didattica Ermeneutica Esistenziale adotta una valutazione di natura principalmente promozionale, formativa ed orientativa. 
+                    In questa sezione sono sintetizzate le evidenze osservabili e lo strumento di generazione del feedback formativo personalizzato.
+                </p>
+            </div>
+
+            <!-- Visual Chart Container: Competence Radar -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Radar Chart (7 cols) -->
+                <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-900 mb-1">🎯 Radar delle Competenze Digitali & Civiche di Classe</h3>
+                    <p class="text-xs text-slate-500 mb-4">Profilo medio raggiunto dagli alunni nelle 6 dimensioni del percorso DEE:</p>
+                    <div class="chart-container">
+                        <canvas id="competenceRadarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Feedback Generator Tool (5 cols) -->
+                <div class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 mb-2">📝 Generatore di Feedback Formativo DEE</h3>
+                        <p class="text-xs text-slate-500 mb-4">Seleziona il livello per comporre la formula di restituzione al singolo studente:</p>
+
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="font-bold text-slate-700 block mb-1">Livello di Competenza:</label>
+                                <select id="feedback-level" class="w-full p-2 border border-slate-300 rounded-lg bg-slate-50">
+                                    <option value="eccellente">Avanzato / Eccellente (9-10)</option>
+                                    <option value="intermedio">Intermedio (7-8)</option>
+                                    <option value="base">Base / In Avvio (5-6)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="font-bold text-slate-700 block mb-1">Punto di forza riscontrato:</label>
+                                <input type="text" id="feedback-strength" value="analizzare con rigore le fonti informative" class="w-full p-2 border border-slate-300 rounded-lg">
+                            </div>
+
+                            <div>
+                                <label class="font-bold text-slate-700 block mb-1">Aspetto da consolidare:</label>
+                                <input type="text" id="feedback-weakness" value="evitare reazioni d'impulso nelle chat di classe" class="w-full p-2 border border-slate-300 rounded-lg">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-200">
+                        <button onclick="generateDEEFeedback()" class="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl transition shadow">
+                            Genera Frase di Restituzione
+                        </button>
+
+                        <div id="dee-feedback-result" class="hidden mt-3 p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xl font-mono leading-relaxed">
+                            <!-- Generated feedback -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- LESSON DETAIL MODAL OVERLAY -->
+    <div id="lesson-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white max-w-2xl w-full rounded-2xl shadow-2xl overflow-hidden border border-slate-200 max-h-[90vh] flex flex-col">
+            <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
+                <h3 id="modal-title" class="text-lg font-bold text-amber-400">Dettaglio Lezione</h3>
+                <button onclick="closeLessonModal()" class="text-slate-400 hover:text-white font-bold text-xl">&times;</button>
+            </div>
+            <div id="modal-body" class="p-6 overflow-y-auto space-y-4 text-xs text-slate-700 leading-relaxed">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 text-right">
+                <button onclick="closeLessonModal()" class="px-5 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl">Chiudi Modal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 space-y-1">
+            <p><strong>Cittadini Responsabili nella Rete</strong> — Percorso Integrato di Educazione Civica e Digitale</p>
+            <p>Scuola Secondaria di Primo Grado | Metodologia Didattica Ermeneutica Esistenziale (DEE)</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // GLOBAL STATE MANAGEMENT
+        let escapeRoomProgress = {
+            tappa1: false,
+            tappa2: false,
+            tappa3: false
+        };
+
+        // Fact checking simulator current selected post dataset
+        const factCheckCases = {
+            insta: {
+                title: 'Post Instagram: @studenti_scuola_insieme',
+                author: 'Utente non ufficiale (profilo anonimo)',
+                date: '2 ore fa (senza circolare ufficiale)',
+                text: '🚨 ATTENZIONE! NOTIZIA IMPORTANTE! 🚨 Da domani la scuola cambierà orario: inizio ore 10:00! Fonte riservata interna lo ha confermato. Condividete prima che sia tardi!',
+                isVerified: false,
+                percent: 0,
+                verdict: 'NOTIZIA NON VERIFICATA / FAKE NEWS VIRALE',
+                action: '🚫 NON CONDIVIDERE'
+            },
+            matteo: {
+                title: 'Messaggio WhatsApp Inoltrato',
+                author: 'Contatto sconosciuto in chat di gruppo',
+                date: 'Oggi ore 10:24',
+                text: '⚠️ ATTENZIONE! Domani scuola chiusa per disinfestazione. L’ho saputo da una fonte interna. Inoltrate subito nei gruppi autobus!',
+                isVerified: false,
+                percent: 20,
+                verdict: 'ALLARME INGIUSTIFICATO / FALSO RUMOR',
+                action: '🛑 FERMATI E VERIFICA SUL SITO',
+            },
+            biblio: {
+                title: 'Comunicato Ufficiale Comune di San Martino',
+                author: 'Ufficio Stampa Comunale (Sito ufficiale .gov.it)',
+                date: '30/08/2026 - Prot. 4521',
+                text: 'Si comunica che la biblioteca comunale resterà chiusa al pubblico da lunedì 1 settembre per inizio lavori di ristrutturazione.',
+                isVerified: true,
+                percent: 100,
+                verdict: 'FONTE UFFICIALE ED ATTENDIBILE',
+                action: '✅ INFORMAZIONE VERIFICATA'
+            }
+        };
+
+        let currentFactCheckKey = 'insta';
+
+        // TAB SWITCHING LOGIC
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-brand-700', 'bg-brand-50', 'border', 'border-brand-200');
+                btn.classList.add('text-slate-600');
+            });
+
+            const targetTab = document.getElementById('tab-' + tabId);
+            if(targetTab) targetTab.classList.remove('hidden');
+
+            const targetNavBtn = document.getElementById('nav-' + tabId);
+            if(targetNavBtn) {
+                targetNavBtn.classList.remove('text-slate-600');
+                targetNavBtn.classList.add('text-brand-700', 'bg-brand-50', 'border', 'border-brand-200');
+            }
+
+            // Trigger chart update if visible
+            if(tabId === 'docente' && window.competenceRadarChart) {
+                window.competenceRadarChart.resize();
+            }
+            if(tabId === 'fact-checker' && window.factCheckingChart) {
+                window.factCheckingChart.resize();
+            }
+        }
+
+        // ESCAPE ROOM VERIFICATION FUNCTIONS
+        function verifyTappa1() {
+            const selected = document.querySelector('input[name="tappa1"]:checked');
+            if(!selected) {
+                alert("Seleziona una risposta prima di verificare!");
+                return;
+            }
+            if(selected.value === 'B') {
+                escapeRoomProgress.tappa1 = true;
+                document.getElementById('badge-tappa-1').textContent = "Sbloccata ✓";
+                document.getElementById('badge-tappa-1').className = "text-xs font-mono font-semibold text-emerald-700 bg-emerald-100 px-2 py-1 rounded";
+                document.getElementById('btn-tappa-1').disabled = true;
+                document.getElementById('btn-tappa-1').textContent = "Completato ✓";
+                document.getElementById('btn-tappa-1').className = "w-full py-2.5 bg-emerald-600 text-white font-medium text-sm rounded-xl cursor-not-allowed";
+
+                // Enable Tappa 2 Card
+                const card2 = document.getElementById('card-tappa-2');
+                card2.classList.remove('opacity-60', 'pointer-events-none');
+                card2.classList.add('border-2', 'border-brand-500');
+                document.getElementById('badge-tappa-2').textContent = "In Corso";
+                document.getElementById('badge-tappa-2').className = "text-xs font-mono font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded";
+
+                updateSystemBanner();
+            } else {
+                alert("Risposta errata. Ricorda: qual è il fine ultimo sia di San Francesco che della Costituzione?");
+            }
+        }
+
+        function verifyTappa2() {
+            const checkedFotocopie = Array.from(document.querySelectorAll('.fotocopia-check:checked')).map(cb => cb.value);
+            const acutisWord = document.getElementById('input-acutis').value.trim().toLowerCase();
+
+            // Correct selected checkboxes must be exactly foto1, foto3, foto5 (the 3 negative behaviors to eliminate)
+            const isFotocopieCorrect = checkedFotocopie.length === 3 && 
+                                       checkedFotocopie.includes('foto1') && 
+                                       checkedFotocopie.includes('foto3') && 
+                                       checkedFotocopie.includes('foto5');
+
+            if(!isFotocopieCorrect) {
+                alert("Selezione errata! Devi individuare e spuntare esattamente le 3 'Fotocopie' (i comportamenti negativi/errati da scartare: punti 1, 3 e 5).");
+                return;
+            }
+
+            if(acutisWord !== 'fotocopie' && acutisWord !== 'fotocopia') {
+                alert("Controlla la parola mancante della frase di Carlo Acutis: 'Tutti nascono come originali, ma molti muoiono come...'");
+                return;
+            }
+
+            escapeRoomProgress.tappa2 = true;
+            document.getElementById('badge-tappa-2').textContent = "Sbloccata ✓";
+            document.getElementById('badge-tappa-2').className = "text-xs font-mono font-semibold text-emerald-700 bg-emerald-100 px-2 py-1 rounded";
+            document.getElementById('btn-tappa-2').disabled = true;
+            document.getElementById('btn-tappa-2').textContent = "Completato ✓";
+            document.getElementById('btn-tappa-2').className = "w-full py-2.5 bg-emerald-600 text-white font-medium text-sm rounded-xl cursor-not-allowed";
+
+            // Enable Tappa 3 Card
+            const card3 = document.getElementById('card-tappa-3');
+            card3.classList.remove('opacity-60', 'pointer-events-none');
+            card3.classList.add('border-2', 'border-brand-500');
+            document.getElementById('badge-tappa-3').textContent = "In Corso";
+            document.getElementById('badge-tappa-3').className = "text-xs font-mono font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded";
+
+            updateSystemBanner();
+        }
+
+        function verifyTappa3() {
+            const selected = document.querySelector('input[name="tappa3"]:checked');
+            if(!selected) {
+                alert("Seleziona il termine mancante nell'equazione!");
+                return;
+            }
+
+            if(selected.value === 'B') {
+                escapeRoomProgress.tappa3 = true;
+                document.getElementById('badge-tappa-3').textContent = "Sbloccata ✓";
+                document.getElementById('badge-tappa-3').className = "text-xs font-mono font-semibold text-emerald-700 bg-emerald-100 px-2 py-1 rounded";
+                document.getElementById('btn-tappa-3').disabled = true;
+                document.getElementById('btn-tappa-3').textContent = "Completato ✓";
+
+                updateSystemBanner();
+
+                // Show Mission Unlocked Card
+                document.getElementById('unlocked-mission-card').classList.remove('hidden');
+                document.getElementById('unlocked-mission-card').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert("Risposta errata. Senza quale valore la libertà diventa egoismo ed arbitrio?");
+            }
+        }
+
+        function updateSystemBanner() {
+            let count = 0;
+            if(escapeRoomProgress.tappa1) count++;
+            if(escapeRoomProgress.tappa2) count++;
+            if(escapeRoomProgress.tappa3) count++;
+
+            document.getElementById('unlock-progress-text').textContent = count + " / 3 TAPPE";
+
+            if(count === 3) {
+                const banner = document.getElementById('system-status-banner');
+                banner.className = "bg-emerald-950 text-white p-6 rounded-2xl shadow-lg border-2 border-emerald-400 transition-all duration-500";
+                document.getElementById('status-icon').className = "w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center font-mono font-bold text-xl";
+                document.getElementById('status-icon').textContent = "🔓";
+                document.getElementById('status-title').textContent = "SYSTEM UNLOCKED - ARCHIVIO ACCESSIBILE";
+                document.getElementById('status-title').className = "text-xl font-mono font-bold text-emerald-400";
+                document.getElementById('status-desc').textContent = "Avete ricostruito la bussola etica! L'accesso al percorso di Terza Media è sbloccato.";
+            }
+        }
+
+        // LESSON CASE EXPLORER LOGIC
+        const caseData = {
+            1: {
+                title: 'Caso A: Offese ed Esclusione nella Chat di Classe',
+                text: 'Nel gruppo WhatsApp della classe alcuni alunni prendono in giro pesantemente un compagno con battute ed emoji irrispettose. Tu non partecipi direttamente alle offese, ma leggi tutti i messaggi in tempo reale.',
+                questions: [
+                    'Se ti limiti a leggere senza intervenire o segnalare, sei comunque responsabile?',
+                    'Qual è l’impatto del silenzio di chi osserva su chi subisce l’offesa?',
+                    'Come si collega l’Articolo 3 della Costituzione (pari dignità) a questa chat?'
+                ]
+            },
+            2: {
+                title: 'Caso B: Pubblicazione di Video Imbarazzanti sui Social',
+                text: 'Un alunno vuole pubblicare sul suo profilo TikTok un video compromettente girato a ricreazione. La sua motivazione è: "Il profilo è mio e sono libero di pubblicare quello che mi pare".',
+                questions: [
+                    'La libertà personale giustifica il ferimento della dignità dell’altro?',
+                    'Quali sono i confini inviolabili della riservatezza e dell’immagine altrui?',
+                    'Quali conseguenze permanenti lascia un video in rete?'
+                ]
+            },
+            3: {
+                title: 'Caso C: Violazione delle Regole Scolastiche',
+                text: 'Un ragazzo usa lo smartphone nei corridoi violando il regolamento scolastico, giustificandosi così: "Tanto non sto facendo male a nessuno, non danneggia nessuno".',
+                questions: [
+                    'Chi stabilisce le regole e a cosa servono in una comunità civile?',
+                    'Le regole limitano soltanto o servono anche a proteggere la convivenza?',
+                    'Cosa succederebbe se ognuno stabilisse da solo quali regole rispettare?'
+                ]
+            }
+        };
+
+        function showCase(num) {
+            [1, 2, 3].forEach(n => {
+                const btn = document.getElementById('btn-case-' + n);
+                if(n === num) {
+                    btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white transition";
+                } else {
+                    btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition";
+                }
+            });
+
+            const data = caseData[num];
+            const display = document.getElementById('case-display');
+            display.innerHTML = `
+                <h4 class="text-sm font-bold text-brand-800">${data.title}</h4>
+                <p class="text-xs text-slate-700 italic bg-white p-3 rounded-lg border border-slate-200">"${data.text}"</p>
+                <div class="space-y-1">
+                    <p class="text-xs font-bold text-slate-900">Quesiti di Riflessione DEE:</p>
+                    <ul class="list-disc list-inside text-xs text-slate-600 space-y-1">
+                        ${data.questions.map(q => `<li>${q}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        // FACT CHECKING LAB LOGIC
+        function loadFactCheckCase(key) {
+            currentFactCheckKey = key;
+            const data = factCheckCases[key];
+
+            const container = document.getElementById('simulated-post-container');
+            container.innerHTML = `
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200 mb-3">
+                    <span class="text-xs font-bold text-slate-800">${data.title}</span>
+                    <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">${data.date}</span>
+                </div>
+                <p class="text-xs text-slate-500 font-medium mb-1">Pubblicato da: <strong>${data.author}</strong></p>
+                <div class="p-3 bg-amber-50/60 border border-amber-200 rounded-xl text-xs text-slate-800 font-mono leading-relaxed mb-3">
+                    ${data.text}
+                </div>
+            `;
+
+            // Reset checkboxes
+            ['chi', 'quando', 'prove', 'confronto', 'perche'].forEach(id => {
+                document.getElementById('chk-' + id).checked = false;
+            });
+
+            if(key === 'biblio') {
+                document.getElementById('chk-chi').checked = true;
+                document.getElementById('chk-quando').checked = true;
+                document.getElementById('chk-prove').checked = true;
+                document.getElementById('chk-confronto').checked = true;
+                document.getElementById('chk-perche').checked = true;
+            }
+
+            updateFactCheckScore();
+        }
+
+        function updateFactCheckScore() {
+            const data = factCheckCases[currentFactCheckKey];
+            const chks = ['chi', 'quando', 'prove', 'confronto', 'perche'].map(id => document.getElementById('chk-' + id).checked);
+            const count = chks.filter(Boolean).length;
+            const percent = count * 20;
+
+            const bar = document.getElementById('factcheck-bar');
+            const percentTxt = document.getElementById('factcheck-percent');
+            const box = document.getElementById('factcheck-verdict-box');
+            const verdictTxt = document.getElementById('factcheck-verdict-text');
+            const badge = document.getElementById('factcheck-action-badge');
+
+            percentTxt.textContent = percent + "%";
+            bar.style.width = percent + "%";
+
+            if(percent >= 80) {
+                bar.className = "bg-emerald-500 h-3 rounded-full transition-all duration-500";
+                percentTxt.className = "text-sm font-bold font-mono text-emerald-600";
+                box.className = "p-3 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-xl text-xs flex justify-between items-center";
+                verdictTxt.textContent = "NOTIZIA VERIFICATA ED ATTENDIBILE";
+                badge.className = "px-2.5 py-1 bg-emerald-600 text-white font-bold text-[10px] rounded-full uppercase";
+                badge.textContent = "✅ PUOI CONDIVIDERE";
+            } else if(percent >= 40) {
+                bar.className = "bg-amber-500 h-3 rounded-full transition-all duration-500";
+                percentTxt.className = "text-sm font-bold font-mono text-amber-600";
+                box.className = "p-3 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl text-xs flex justify-between items-center";
+                verdictTxt.textContent = "FONTE DUBBIA / INFORMAZIONE PARZIALE";
+                badge.className = "px-2.5 py-1 bg-amber-600 text-white font-bold text-[10px] rounded-full uppercase";
+                badge.textContent = "⚠️ VERIFICA MEGLIO";
+            } else {
+                bar.className = "bg-red-500 h-3 rounded-full transition-all duration-500";
+                percentTxt.className = "text-sm font-bold font-mono text-red-600";
+                box.className = "p-3 bg-red-50 text-red-900 border border-red-200 rounded-xl text-xs flex justify-between items-center";
+                verdictTxt.textContent = "NOTIZIA NON VERIFICATA / SOSPETTA FAKE NEWS";
+                badge.className = "px-2.5 py-1 bg-red-600 text-white font-bold text-[10px] rounded-full uppercase";
+                badge.textContent = "🚫 NON CONDIVIDERE";
+            }
+        }
+
+        // MANIFESTO SIGNING LOGIC
+        function updateManifestoProgress() {
+            const chks = document.querySelectorAll('.manifesto-chk:checked').length;
+        }
+
+        function signManifesto() {
+            const name = document.getElementById('student-name').value.trim();
+            const chks = document.querySelectorAll('.manifesto-chk:checked').length;
+
+            if(!name) {
+                alert("Inserisci il tuo nome prima di firmare!");
+                return;
+            }
+
+            if(chks < 5) {
+                alert("Per favore, leggi e seleziona tutte e 5 le regole del Manifesto prima di sottoscrivere!");
+                return;
+            }
+
+            const output = document.getElementById('signature-output');
+            output.classList.remove('hidden');
+            output.innerHTML = `
+                🎉 <strong>ATTESTATO DI CITTADINO DIGITALE RESPONSABILE</strong><br>
+                Sottoscritto ufficialmente da: <strong>${name}</strong><br>
+                <em>"Mi impegno a fermarmi, controllare, confrontare e pensare prima di condividere in rete."</em>
+            `;
+        }
+
+        // MODAL LOGIC FOR LESSON DETAILS
+        const modalContent = {
+            1: {
+                title: 'Lezione 1 — Essere Cittadini: Libertà e Responsabilità',
+                body: `
+                    <p><strong>Obiettivo:</strong> Scoprire che la libertà individuale trova la sua garanzia nella responsabilità verso gli altri e nella cura del bene comune.</p>
+                    <p><strong>Struttura Fasi DEE:</strong></p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><strong>Esperienza (10 min):</strong> Presentazione dei 3 casi-problema (Offese in chat, Video sui social, Regole scolastiche).</li>
+                        <li><strong>Confronto (15 min):</strong> Dibattito in aula: "Essere liberi significa poter fare tutto?".</li>
+                        <li><strong>Fonte (10 min):</strong> Raccordo con gli Articoli 2 (Solidarietà) e 3 (Pari Dignità) della Costituzione.</li>
+                        <li><strong>Rielaborazione (10 min):</strong> Lavoro di gruppo sulla Catena della Responsabilità.</li>
+                    </ul>
+                `
+            },
+            2: {
+                title: 'Lezione 2 — Informazioni: Posso Fidarmi?',
+                body: `
+                    <p><strong>Obiettivo:</strong> Fornire strumenti critici per analizzare i testi digitali e valutare la qualità delle fonti.</p>
+                    <p><strong>Struttura Fasi DEE:</strong></p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><strong>Esperienza (10 min):</strong> Analisi di 4 messaggi reali senza etichette (Ufficiale, Opinione, Ad, Fake News).</li>
+                        <li><strong>Fonte & Interpretazione (25 min):</strong> Applicazione della Cassetta degli Attrezzi del Fact-Checker (Chi, Quando, Prove, Confronto, Perché).</li>
+                        <li><strong>Sintesi (10 min):</strong> Formalizzazione dei 5 Capisaldi della Verifica delle Notizie.</li>
+                    </ul>
+                `
+            },
+            3: {
+                title: 'Lezione 3 — Il Cittadino Digitale Responsabile',
+                body: `
+                    <p><strong>Obiettivo:</strong> Interiorizzare le competenze critiche attraverso la stesura del Manifesto comune e il compito di realtà.</p>
+                    <p><strong>Struttura Fasi DEE:</strong></p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><strong>Sintesi (15 min):</strong> Co-costruzione del Manifesto con le 5 Regole di convivenza virtuale.</li>
+                        <li><strong>Compito Autentico (25 min):</strong> Prova individuale del "Cacciatore di Notizie" (Analisi di un post Instagram virale e del Caso di Matteo).</li>
+                        <li><strong>Apertura Esistenziale (5 min):</strong> Autovalutazione e domanda finale sull'anonimato in rete.</li>
+                    </ul>
+                `
+            }
+        };
+
+        function openLessonModal(num) {
+            const data = modalContent[num];
+            document.getElementById('modal-title').textContent = data.title;
+            document.getElementById('modal-body').innerHTML = data.body;
+            document.getElementById('lesson-modal').classList.remove('hidden');
+        }
+
+        function closeLessonModal() {
+            document.getElementById('lesson-modal').classList.add('hidden');
+        }
+
+        // DEE FEEDBACK GENERATOR
+        function generateDEEFeedback() {
+            const lvl = document.getElementById('feedback-level').value;
+            const str = document.getElementById('feedback-strength').value.trim();
+            const weak = document.getElementById('feedback-weakness').value.trim();
+
+            let txt = "";
+            if(lvl === 'eccellente') {
+                txt = `«Hai dimostrato di saper ${str} con piena consapevolezza critica. Per potenziare ulteriormente la tua leadership civile ti consiglio di guidare i compagni nel ${weak}.»`;
+            } else if(lvl === 'intermedio') {
+                txt = `«Hai dimostrato di saper ${str} in modo corretto. Perfezionerai il tuo percorso consolidando l'attitudine a ${weak}.»`;
+            } else {
+                txt = `«Hai mostrato primi segnali positivi nel comprendere le regole. Per migliorare ti consiglio nello specifico di impegnarti a ${weak}.»`;
+            }
+
+            const res = document.getElementById('dee-feedback-result');
+            res.classList.remove('hidden');
+            res.innerHTML = `<strong>Formula di Feedback DEE:</strong><br>${txt}`;
+        }
+
+        // CHART.JS INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            
+            // Initialize Fact Checking Lab with Case 1
+            loadFactCheckCase('insta');
+            showCase(1);
+
+            // Chart 1: Fact Checking Criteria Weights (Bar Chart)
+            const ctxBar = document.getElementById('factCheckingChart').getContext('2d');
+            window.factCheckingChart = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['CHI (Fonte)', 'QUANDO (Data)', 'PROVE (Dati)', 'CONFRONTO', 'PERCHÉ (Scopo)'],
+                    datasets: [{
+                        label: 'Importanza Riconosciuta (%)',
+                        data: [90, 75, 85, 95, 80],
+                        backgroundColor: '#0d9488',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + '% di rilevanza nella verifica';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) { return value + '%'; }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: DEE Competence Radar Chart
+            const ctxRadar = document.getElementById('competenceRadarChart').getContext('2d');
+            window.competenceRadarChart = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Libertà & Responsabilità',
+                        'Verifica Fonti (Fact-check)',
+                        'Tutela Dignità Altrui',
+                        'Linguaggio Rispettoso',
+                        'Inclusione nelle Chat',
+                        'Consapevolezza Impronta'
+                    ],
+                    datasets: [
+                        {
+                            label: 'Livello Iniziale (Pre-Percorso)',
+                            data: [40, 30, 50, 45, 35, 30],
+                            borderColor: '#94a3b8',
+                            backgroundColor: 'rgba(148, 163, 184, 0.2)',
+                            borderWidth: 1.5
+                        },
+                        {
+                            label: 'Livello Finale (Post-Percorso)',
+                            data: [85, 90, 88, 80, 85, 92],
+                            borderColor: '#0d9488',
+                            backgroundColor: 'rgba(13, 148, 136, 0.25)',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: '#e2e8f0' },
+                            grid: { color: '#f1f5f9' },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
